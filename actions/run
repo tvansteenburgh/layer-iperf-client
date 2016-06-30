@@ -1,0 +1,59 @@
+#!/usr/bin/env python3
+
+import re
+import subprocess
+import shlex
+
+from charmhelpers.core.hookenv import action_fail
+from charmhelpers.core.hookenv import action_get
+from charmhelpers.core.hookenv import action_set
+from charmhelpers.core.unitdata import kv
+
+kvdb = kv()
+
+
+def parse_output(output):
+    action_set({'raw': output})
+
+    started = False
+    for line in output.split('\n'):
+        if started:
+            parse_line(line)
+        elif line.startswith('[ ID]'):
+            started = True
+
+
+def parse_line(line):
+    id_ = re.match(r'^\[(.*)\]', line).group(1).strip()
+    parts = line.split('  ')
+    bandwidth = parts[-1]
+    key = 'bandwidth-{}.'.format(id_.lower())
+    value, units = bandwidth.split()
+    action_set({key + 'value': float(value)})
+    action_set({key + 'units': units})
+    action_set({key + 'direction': 'asc'})
+
+
+def main():
+    try:
+        host = kvdb.get('server-host'),
+        port = kvdb.get('server-port'),
+        if not (host and port):
+            raise Exception("need relation to iperf server")
+
+        cmd = 'iperf -c {} -p {} -t {} -P {}'.format(
+            kvdb.get('server-host'),
+            kvdb.get('server-port'),
+            action_get('time'),
+            action_get('parallel'),
+        )
+        print(cmd)
+        output = subprocess.check_output(shlex.split(cmd))
+        output = output.decode().strip()
+        parse_output(output)
+    except Exception as e:
+        action_fail(repr(e))
+
+
+if __name__ == '__main__':
+    main()

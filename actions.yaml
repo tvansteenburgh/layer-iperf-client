@@ -1,0 +1,11 @@
+run:
+  description: Run the iperf client
+  params:
+    time:
+      description: Time to run, in seconds
+      type: integer
+      default: 30
+    parallel:
+      description: Number of parallel client threads to run
+      type: integer
+      default: 1

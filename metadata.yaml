@@ -1,0 +1,11 @@
+name: iperf-client
+summary: iperf-client
+maintainer: Tim Van Steenburgh <Tim.Van.Steenburgh@xenial-vm>
+description: |
+  iperf-client
+tags:
+  - misc
+subordinate: false
+requires:
+  iperf:
+    interface: iperf
